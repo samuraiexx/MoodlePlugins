@@ -16,7 +16,7 @@ class local_codeverify_observer {
             $url = $CFG->dataroot . '/filedir/' . substr($fch, 0, 2) . '/' .
                 substr($fch, 2, 2) . '/' . $fch;
 
-            if(substr($filename, -2) != ".c") return;
+            if(substr($filename, -2) != ".c") continue;
 
             $cmd = "gcc -x c " . $url . " -o " . $CFG->dataroot . "/tmp.exe 2>&1";
             $s = str_replace($url.':', '', shell_exec($cmd));
