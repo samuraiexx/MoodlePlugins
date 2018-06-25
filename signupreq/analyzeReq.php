@@ -3,8 +3,8 @@
 require_once('../../config.php');
 require_once($CFG->dirroot . '/user/filters/lib.php');
 require_once('analyzeReqFunc.php');
+require_once('lang/'. $CFG->lang . '/auth_signupreq.php');
 require_once('debug.php');
-require_once('./lang/'. $CFG->lang . '/auth_signupreq.php');
 
 //require_once($CFG->dirroot . '/user/lib.php');
 //require_once($CFG->libdir . '/authlib.php');
@@ -24,6 +24,8 @@ $clSubType = optional_param('submit', '', PARAM_ALPHANUM); // checklist - submis
 
 $title =  'Analyze Requests';
 $url = new moodle_url("/auth/signupreq/analyzeReq.php");
+
+$PAGE->set_context(context_system::instance());
 $PAGE->set_url($url);
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
@@ -66,6 +68,7 @@ if (!empty($clIds) and confirm_sesskey()) {
         foreach ($clIds as $delete) {
             $user = $DB->get_record('user', array('id' => $delete, 'mnethostid' => $CFG->mnet_localhost_id), '*', MUST_EXIST);
             if (!$user->deleted and !is_siteadmin($user->id))
+                send_mail($user,'reject');
                 delete_user($user);
         }
     }
@@ -212,7 +215,7 @@ if (!$users) {
     $table->head[] = ${$sEmail};
     foreach ($sExtraFields as $name)
         $table->head[] = ${$name};
-    $table->head[] = ${$secaodeensino};
+    $table->head[] = ${'secaodeensino'};
     $table->head[] = get_string('edit');
     $table->colclasses[] = 'centeralign';
     $table->head[] = "";

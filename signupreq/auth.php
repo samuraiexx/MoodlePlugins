@@ -2,7 +2,6 @@
 require_once($CFG->libdir.'/authlib.php');
 require_once('debug.php');
 
-
 class auth_plugin_signupreq extends auth_plugin_base {
 
 
@@ -54,7 +53,8 @@ class auth_plugin_signupreq extends auth_plugin_base {
      *
      * @param object $user new user object
      * @param boolean $notify print notice with link and terminate
-     * @return I don't know
+     * @return boolean
+     * @throws Exception
      */
     function user_signup($user, $notify=true) {
         // Standard signup, without custom confirmatinurl.
@@ -77,6 +77,22 @@ class auth_plugin_signupreq extends auth_plugin_base {
         global $CFG, $DB;
         require_once($CFG->dirroot.'/user/profile/lib.php');
         require_once($CFG->dirroot.'/user/lib.php');
+        require_once('mailFunc.php');
+
+        $from = new \stdClass();
+        $from->email = $CFG->supportemail;
+        $from->firstname = $CFG->supportname;
+        $from->lastname = '';
+        $from->maildisplay = true;
+        $from->mailformat = 1;
+        $from->id = -1;
+        $from->firstnamephonetic = '';
+        $from->lastnamephonetic = '';
+        $from->middlename = '';
+        $from->alternatename = '';
+
+        send_mail($from, "notify");
+
 
         $plainpassword = $user->password;
         $user->password = hash_internal_user_password($user->password);

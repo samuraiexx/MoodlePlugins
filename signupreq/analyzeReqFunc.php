@@ -5,6 +5,9 @@
  * @param user $user
  * @return auth_confirm_code*/
 require_once('debug.php');
+require_once('mailFunc.php');
+
+require_once($CFG->libdir . '/authlib.php');
 
 function user_confirm($user) {
     global $DB;
@@ -13,8 +16,12 @@ function user_confirm($user) {
         if ($user->auth != 'signupreq') return AUTH_CONFIRM_ERROR;
         else if ($user->confirmed) return AUTH_CONFIRM_ALREADY;
         else {
-            $DB->set_field("user", "confirmed", 1, array("id" => $user->id));
-            return AUTH_CONFIRM_OK;
+            try {
+                $DB->set_field("user", "confirmed", 1, array("id" => $user->id));
+                return AUTH_CONFIRM_OK;
+            } catch (Exception $e){
+                return AUTH_CONFIRM_ERROR;
+            }
         }
     }
     return AUTH_CONFIRM_ERROR;
@@ -55,16 +62,26 @@ function addExtraFields(&$users, $extraFields, $categoryFields, $sCategoryField,
 
 function confirmUser(&$sitecontext, &$DB, &$CFG, &$confirmuser){
     $user = null;
-    require_capability('moodle/user:update', $sitecontext);
-    if (!$user = $DB->get_record('user', array('id' => $confirmuser, 'mnethostid' => $CFG->mnet_localhost_id))) {
-        print_error('nousers');
+    try {
+        require_capability('moodle/user:update', $sitecontext);
+        if (!$user = $DB->get_record('user', array('id' => $confirmuser, 'mnethostid' => $CFG->mnet_localhost_id))) {
+            print_error('nousers');
+        }
+    } catch(Exception $e){
+        return AUTH_CONFIRM_ERROR;
     }
-    return user_confirm($user);
+
+    $status = user_confirm($user);
+    if($status == AUTH_CONFIRM_OK)
+        send_mail($user, 'confirm');
+
+    return $status;
 }
 
 
 function deleteUser(&$sitecontext, &$DB, &$OUTPUT, &$CFG, &$delete, &$returnurl, &$confirm)
 {
+    global $DB;
     require_capability('moodle/user:delete', $sitecontext);
 
     $user = $DB->get_record('user', array('id' => $delete, 'mnethostid' => $CFG->mnet_localhost_id), '*', MUST_EXIST);
@@ -75,6 +92,7 @@ function deleteUser(&$sitecontext, &$DB, &$OUTPUT, &$CFG, &$delete, &$returnurl,
     if (is_siteadmin($user->id)) {
         print_error('useradminodelete', 'error');
     }
+
     if ($confirm != md5($delete)) {
         echo $OUTPUT->header();
         $fullname = fullname($user, true);
@@ -88,6 +106,7 @@ function deleteUser(&$sitecontext, &$DB, &$OUTPUT, &$CFG, &$delete, &$returnurl,
         echo $OUTPUT->footer();
         die;
     } else if (data_submitted()) {
+        send_mail($user,'reject');
         if (delete_user($user)) {
             \core\session\manager::gc(); // Remove stale sessions.
             redirect($returnurl);
