@@ -45,9 +45,9 @@ function addExtraFields(&$users, $extraFields, $categoryFields, $sCategoryField,
             $formfield = new $newfield($field->id, $user->id);
             if($formfield->data == 1){
                 $category = $field->name;
+		$user->{$sCategoryField} = $category;
                 break;
             }
-            $user->{$sCategoryField} = $category;
         }
     }
 

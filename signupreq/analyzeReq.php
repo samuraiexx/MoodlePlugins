@@ -215,7 +215,7 @@ if (!$users) {
     $table->head[] = ${$sEmail};
     foreach ($sExtraFields as $name)
         $table->head[] = ${$name};
-    $table->head[] = ${'secaodeensino'};
+    $table->head[] = ${$sCategoryField};
     $table->head[] = get_string('edit');
     $table->colclasses[] = 'centeralign';
     $table->head[] = "";
@@ -259,7 +259,7 @@ if (!$users) {
                 $row[] = $user->{$field->oName};
 
 
-        $row[] = $user->categoria;
+        $row[] = $user->{$sCategoryField};
         $row[] = implode(' ', $buttons);
         $table->data[] = $row;
     }
